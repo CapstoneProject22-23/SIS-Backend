@@ -8,6 +8,7 @@ Icon
 
 
 assets/
+.vscode/
 
 # Thumbnails
 ._*

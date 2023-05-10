@@ -1,15 +1,15 @@
 [tool.poetry]
-name = "django-app"
+name = "sis-backend"
 version = "0.1.0"
 description = ""
-authors = ["PiyushVyas13 <jaiprakashvyas6@gmail.com>"]
+authors = ["PiyushVyas13 <vyaspiyush2208@gmail.com>"]
 license = "MIT"
 readme = "README.md"
-packages = [{include = "django_app"}]
+packages = [{include = "sis_backend"}]
 
 [tool.poetry.dependencies]
-python = "^3.9.7"
-Django = "^4.1.7"
+python = "^3.10"
+django = "^4.1.7"
 djangorestframework = "^3.14.0"
 psycopg2 = "^2.9.5"
 django-rest-knox = "^4.2.0"
@@ -18,7 +18,6 @@ reportlab = "^3.6.12"
 ipython = "^8.13.2"
 pdfrw = "^0.4"
 pypdf2 = "^3.0.1"
-
 
 [build-system]
 requires = ["poetry-core"]

@@ -44,6 +44,7 @@ lib64/
 parts/
 sdist/
 .idea/
+.vscode/
 var/
 *.egg-info/
 .installed.cfg

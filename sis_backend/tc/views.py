@@ -1,17 +1,23 @@
 from django.shortcuts import render, get_object_or_404
 from django.views import View
 import pdfrw
-from django.http import HttpResponse
+from django.http import HttpResponse, FileResponse
 from PyPDF2.generic import TextStringObject, NumberObject
 from PyPDF2 import PdfReader, PdfWriter
 from rest_framework.views import APIView, Response
 import os
+from django.core.files.temp import NamedTemporaryFile
 from django.utils.decorators import method_decorator
 from django.contrib.admin.views.decorators import staff_member_required
 from rest_framework import permissions
 from users.models import Student
-from rest_framework.generics import RetrieveAPIView
 from django.conf import settings
+from django.views.decorators.csrf import csrf_exempt
+import tempfile
+import zipfile
+import shutil
+import json
+from wsgiref.util import FileWrapper
 
 # Create your views here.
 
@@ -234,7 +240,7 @@ class GenerateSingleTcView(APIView):
             download_link = (
                 "http://localhost:8000/"
                 + settings.STATIC_URL
-                + f"downloads/tc_{enrollment_number}.pdf"
+                + f"downloads/tcs/tc_{enrollment_number}.pdf"
             )
             # Construct the response with the download URL
             response_data = {
@@ -244,3 +250,56 @@ class GenerateSingleTcView(APIView):
 
         # If the file doesn't exist, return a 404 response
         return Response({"detail": "TC PDF not found."}, status=404)
+
+
+# @method_decorator(staff_member_required, name="dispatch")
+@method_decorator(csrf_exempt, name="dispatch")
+class GenerateMultipleTcView(View):
+    def get(self, request):
+        # payload = json.loads(request.body)
+        # start_enrollment = int(payload.get("start_enrollment"))
+        # end_enrollment = int(payload.get("end_enrollment"))
+
+        start_enrollment = int(request.GET.get("start_enrollment"))
+        end_enrollment = int(request.GET.get("end_enrollment"))
+
+        temp_dir = tempfile.mkdtemp()
+        zip_path = os.path.join(temp_dir, "tcs.zip")
+        template_path = "assets/tc_template_1.pdf"
+        template_pdf = PdfReader(template_path)
+
+        for enrollment_number in range(start_enrollment, end_enrollment + 1):
+            output = PdfWriter()
+
+            page = template_pdf.pages[0]
+
+            field1 = page["/Annots"][0].get_object()
+            field1.update(
+                {
+                    TextStringObject("/V"): TextStringObject("0021"),
+                    TextStringObject("/AP"): TextStringObject(""),
+                    TextStringObject("/AS"): TextStringObject("/Off"),
+                    TextStringObject("/Ff"): NumberObject(1),
+                }
+            )
+
+            output.add_page(page)
+            tc_filename = f"tc_{enrollment_number}.pdf"
+
+            tc_filepath = os.path.join(temp_dir, tc_filename)
+            with open(tc_filepath, "wb") as tc_file:
+                output.write(tc_file)
+
+        print(os.listdir(temp_dir))
+        with zipfile.ZipFile(zip_path, "w") as zip_file:
+            for filename in os.listdir(temp_dir):
+                if filename != "tcs.zip":
+                    file_path = os.path.join(temp_dir, filename)
+                    zip_file.write(file_path, arcname=filename)
+        print("zip file created")
+
+        response = FileResponse(
+            open(zip_path, "rb"), content_type="application/zip", as_attachment=True
+        )
+
+        return response

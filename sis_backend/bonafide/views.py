@@ -18,7 +18,7 @@ def generate_bonafide():
 
 
 class GenerateBonafideView(View):
-    # permission_classes = (permissions.IsAuthenticated,)
+    permission_classes = (permissions.IsAuthenticated,)
 
     def get(self, request):
         student: Student = request.user.student
